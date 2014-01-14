@@ -90,36 +90,36 @@ module Arel
 
       # SQLServer ToSql/Visitor (Overides)
 
-      def visit_Arel_Nodes_SelectStatement(o)
+      def visit_Arel_Nodes_SelectStatement(o, a)
         if complex_count_sql?(o)
-          visit_Arel_Nodes_SelectStatementForComplexCount(o)
+          visit_Arel_Nodes_SelectStatementForComplexCount(o, a)
         elsif o.offset
-          visit_Arel_Nodes_SelectStatementWithOffset(o)
+          visit_Arel_Nodes_SelectStatementWithOffset(o, a)
         else
-          visit_Arel_Nodes_SelectStatementWithOutOffset(o)
+          visit_Arel_Nodes_SelectStatementWithOutOffset(o, a)
         end
       end
       
-      def visit_Arel_Nodes_UpdateStatement(o)
+      def visit_Arel_Nodes_UpdateStatement(o, a)
         if o.orders.any? && o.limit.nil?
           o.limit = Nodes::Limit.new(9223372036854775807)
         end
         super
       end
 
-      def visit_Arel_Nodes_Offset(o)
+      def visit_Arel_Nodes_Offset(o, a)
         "WHERE [__rnt].[__rn] > (#{visit o.expr})"
       end
 
-      def visit_Arel_Nodes_Limit(o)
+      def visit_Arel_Nodes_Limit(o, a)
         "TOP (#{visit o.expr})"
       end
 
-      def visit_Arel_Nodes_Lock(o)
+      def visit_Arel_Nodes_Lock(o, a)
         visit o.expr
       end
       
-      def visit_Arel_Nodes_Ordering(o)
+      def visit_Arel_Nodes_Ordering(o, a)
         if o.respond_to?(:direction)
           "#{visit o.expr} #{o.ascending? ? 'ASC' : 'DESC'}"
         else
@@ -127,13 +127,13 @@ module Arel
         end
       end
       
-      def visit_Arel_Nodes_Bin(o)
+      def visit_Arel_Nodes_Bin(o, a)
         "#{visit o.expr} #{@connection.cs_equality_operator}"
       end
 
       # SQLServer ToSql/Visitor (Additions)
 
-      def visit_Arel_Nodes_SelectStatementWithOutOffset(o, windowed=false)
+      def visit_Arel_Nodes_SelectStatementWithOutOffset(o, a, windowed=false)
         find_and_fix_uncorrelated_joins_in_select_statement(o)
         core = o.cores.first
         projections = core.projections
@@ -165,7 +165,7 @@ module Arel
         ].compact.join ' '
       end
 
-      def visit_Arel_Nodes_SelectStatementWithOffset(o)
+      def visit_Arel_Nodes_SelectStatementWithOffset(o, a)
         core = o.cores.first
         o.limit ||= Arel::Nodes::Limit.new(9223372036854775807)
         orders = rowtable_orders(o)
@@ -181,7 +181,7 @@ module Arel
         ].compact.join ' '
       end
 
-      def visit_Arel_Nodes_SelectStatementForComplexCount(o)
+      def visit_Arel_Nodes_SelectStatementForComplexCount(o, a)
         core = o.cores.first
         o.limit.expr = Arel.sql("#{o.limit.expr} + #{o.offset ? o.offset.expr : 0}") if o.limit
         orders = rowtable_orders(o)
