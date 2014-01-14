@@ -30,7 +30,6 @@ module ActiveRecord
                   elsif requires_new
                     create_savepoint
                   end
-                  increment_open_transactions
                   transaction_open = true
                   @_current_transaction_records.push([])
                 end
@@ -63,7 +62,6 @@ module ActiveRecord
             if outside_transaction?
               @open_transactions = 0
             elsif transaction_open
-              decrement_open_transactions
               begin
                 if open_transactions == 0
                   commit_db_transaction
