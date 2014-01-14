@@ -38,7 +38,6 @@ module ActiveRecord
             rescue Exception => database_transaction_rollback
               if transaction_open && !outside_transaction?
                 transaction_open = false
-                decrement_open_transactions
                 # handle deadlock victim retries at the outermost transaction
                 if open_transactions == 0
                   if database_transaction_rollback.is_a?(::ActiveRecord::DeadlockVictim)
